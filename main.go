@@ -14,7 +14,8 @@ type Client struct {
 }
 
 func main() {
-	clientList := [2]Client{
+	clientList := []Client{
+		{name: "Dev", dirName: "Dev"},
 		{name: "Salish", dirName: "Salish"},
 		{name: "Blackfoot", dirName: "Blackfoot"},
 	}
