@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/charmbracelet/huh"
+	"path/filepath"
 )
 
 type Client struct {
@@ -18,14 +19,18 @@ func main() {
 	clientList := []Client{
 		{name: "Dev", dirName: "Dev"},
 		{name: "Salish", dirName: "Salish"},
-		{name: "Blackfoot", dirName: "Blackfoot"},
-		{name: "Tit", dirName: "Tit"},
-		{name: "Nse", dirName: "Nse"},
+		{name: "Blackfoot", dirName: "BF"},
+		{name: "Colville-Tit", dirName: "Colville-tit"},
+		{name: "Colville-nse", dirName: "Colville-nse"},
+		{name: "Colville-nxa", dirName: "Colville-nxa"},
 	}
-	// var sourceDir string = "mypath"
-	// var destinationDir string = "path"
-	//  sourcePath := filepath.Join("source_dir", "my_file.txt")
-	// destinationPath := filepath.Join("destination_dir", "my_file.txt")
+	fileList := [...]string{"_colors.scss", "clientConfig.js", "clientStyleConfig.scss", "configData.js"}
+	cwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println("error: ", err)
+	}
+	sourceDir := filepath.Join(cwd, "/src/Config")
+	destinationDir := filepath.Join(cwd, "/src/Config")
 	var (
 		clientName string
 	)
@@ -42,14 +47,31 @@ func main() {
 		),
 	)
 
-	err := form.Run()
-	if err != nil {
-		log.Fatal(err)
+	err1 := form.Run()
+	if err1 != nil {
+		log.Fatal(err1)
 	}
 	fmt.Println(clientName)
-	cwd, err := os.Getwd()
-	if err != nil {
-		fmt.Println("error: ", err)
+	var foundClient *Client
+	for i := range clientList {
+		if clientList[i].name == clientName {
+			foundClient = &clientList[i]
+			break
+		}
 	}
-	fmt.Println(cwd)
+	if foundClient == nil {
+		fmt.Println("err: client not found")
+	}
+	sourceDir = filepath.Join(sourceDir, foundClient.dirName)
+
+	var filePaths [4]string
+	for idx, val := range fileList {
+		filePaths[idx] = filepath.Join(sourceDir, val)
+		// fmt.Println("files: ", val, "idx: ", idx)
+	}
+	fmt.Println("filepaths: ", filePaths)
+
+	// fmt.Println(cwd)
+	fmt.Println("sourceDir: ", sourceDir)
+	fmt.Println("destinationDir: ", destinationDir)
 }
