@@ -2,17 +2,61 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 
-	"github.com/charmbracelet/huh"
 	"path/filepath"
+
+	"github.com/charmbracelet/huh"
 )
 
 type Client struct {
 	name    string
 	dirName string
 	path    string
+}
+
+// CopyFile copies a file from src to dst.
+func CopyFile(src, dst string) (int64, error) {
+	// 1. Open the source file
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open source file %s: %w", src, err)
+	}
+	defer sourceFile.Close() // Ensure the source file is closed when the function exits
+
+	// Get the file info from the source to preserve permissions
+	sourceFileInfo, err := sourceFile.Stat()
+	if err != nil {
+		return 0, fmt.Errorf("failed to get source file info %s: %w", src, err)
+	}
+
+	// Create the destination directory if it doesnt exist
+	destDir := filepath.Dir(dst)
+	if err := os.MkdirAll(destDir, 0755); err != nil { // 0755 provides read/write/execute for owner, read/execute for group and others
+		return 0, fmt.Errorf("failed to create destination directory %s: %w", destDir, err)
+	}
+
+	// 2. Create the destination file
+	destinationFile, err := os.Create(dst)
+	if err != nil {
+		return 0, fmt.Errorf("failed to create destination file %s: %w", dst, err)
+	}
+	defer destinationFile.Close() // Ensure the destination file is closed when the function exits
+
+	// Set permissions for the destination file to match the source file
+	if err := os.Chmod(dst, sourceFileInfo.Mode()); err != nil {
+		return 0, fmt.Errorf("failed to set permissions for destination file %s: %w", dst, err)
+	}
+
+	// 3. Copy the content from source to destination
+	bytesCopied, err := io.Copy(destinationFile, sourceFile)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy file content from %s to %s: %w", src, dst, err)
+	}
+
+	return bytesCopied, nil
 }
 
 func main() {
@@ -30,7 +74,7 @@ func main() {
 		fmt.Println("error: ", err)
 	}
 	sourceDir := filepath.Join(cwd, "/src/Config")
-	destinationDir := filepath.Join(cwd, "/src/Config")
+	destinationDir := filepath.Join(cwd, "/src/copyto")
 	var (
 		clientName string
 	)
@@ -63,13 +107,23 @@ func main() {
 		fmt.Println("err: client not found")
 	}
 	sourceDir = filepath.Join(sourceDir, foundClient.dirName)
+	// destDir := filepath.Join(destinationDir, foundClient.dirName)
 
-	var filePaths [4]string
+	var filePathsSrc [len(fileList)]string
+	var filePathsDst [len(fileList)]string
 	for idx, val := range fileList {
-		filePaths[idx] = filepath.Join(sourceDir, val)
+		filePathsSrc[idx] = filepath.Join(sourceDir, val)
+		filePathsDst[idx] = filepath.Join(destinationDir, val)
 		// fmt.Println("files: ", val, "idx: ", idx)
 	}
-	fmt.Println("filepaths: ", filePaths)
+	fmt.Println("filepaths: ", filePathsSrc)
+
+	for idx, val := range filePathsSrc {
+		// err := os.WriteFile(val, )
+		// src := filepath.Join(sourceDir, val)
+		// dst := filepath.Join(destDir, val)
+		CopyFile(val, filePathsDst[idx])
+	}
 
 	// fmt.Println(cwd)
 	fmt.Println("sourceDir: ", sourceDir)
