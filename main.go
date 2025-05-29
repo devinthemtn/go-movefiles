@@ -74,7 +74,8 @@ func main() {
 		fmt.Println("error: ", err)
 	}
 	sourceDir := filepath.Join(cwd, "/src/Config")
-	destinationDir := filepath.Join(cwd, "/src/copyto")
+	destinationDir := filepath.Join(cwd, "/src/Config")
+
 	var (
 		clientName string
 	)
